@@ -1,10 +1,12 @@
 package com.yanovski.restapi.controllers;
 
-import com.yanovski.restapi.dtos.HomeDto;
-import com.yanovski.restapi.services.HelloService;
+import com.yanovski.restapi.dtos.TestDto;
+import com.yanovski.restapi.services.TestService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,27 +17,17 @@ import java.io.IOException;
 public class HomeController {
     private final Logger logger = LogManager.getLogger(HomeController.class);
 
-    private HelloService helloService;
-
     @Autowired
-    public HomeController(HelloService helloService) {
-        this.helloService = helloService;
-    }
-
-//    @GetMapping("/")
-//    public String hello() {
-//        logger.info("TEST");
-//        return "something...";
-//    }
+    private TestService testService;
 
     @GetMapping("/")
     public void redirect(HttpServletResponse response) throws IOException {
         response.sendRedirect("/swagger-ui.html");
     }
 
-    @GetMapping("/home_obj")
-    public HomeDto homeObject() {
-        logger.info("TEST obj");
-        return helloService.helloObj();
+    @GetMapping("/private")
+    public ResponseEntity<TestDto> homeObject() {
+        logger.info("Accessing private test endpoint");
+        return new ResponseEntity<>(testService.getTest(), HttpStatus.OK);
     }
 }

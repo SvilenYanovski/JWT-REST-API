@@ -7,6 +7,7 @@ import com.yanovski.restapi.security.models.JwtRequest;
 import com.yanovski.restapi.security.models.JwtResponse;
 import com.yanovski.restapi.security.services.JwtUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,21 +27,21 @@ public class AuthenticationController {
     private JwtUserDetailsService userDetailsService;
 
     @PostMapping("/authenticate")
-    public ResponseEntity<?> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest) throws Exception {
+    public ResponseEntity<JwtResponse> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest) throws Exception {
         authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
         final UserDetails userDetails = userDetailsService
                 .loadUserByUsername(authenticationRequest.getUsername());
-        final String token = jwtTokenUtil.generateToken(userDetails);
-        return ResponseEntity.ok(new JwtResponse(token));
+        final JwtResponse token = new JwtResponse(jwtTokenUtil.generateToken(userDetails));
+        return new ResponseEntity<>(token, HttpStatus.OK);
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> saveUser(@RequestBody UserDto user) throws Exception {
+    public ResponseEntity<User> saveUser(@RequestBody UserDto user) throws Exception {
         try {
             User created = userDetailsService.save(user);
-            return ResponseEntity.ok().body(created);
+            return new ResponseEntity<>(created, HttpStatus.OK);
         } catch (AuthenticationServiceException ex) {
-            return ResponseEntity.badRequest().body("User exists");
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 

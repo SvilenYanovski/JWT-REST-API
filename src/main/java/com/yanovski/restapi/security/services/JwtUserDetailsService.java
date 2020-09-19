@@ -1,18 +1,17 @@
 package com.yanovski.restapi.security.services;
 
-import java.util.ArrayList;
-
 import com.yanovski.restapi.dtos.UserDto;
 import com.yanovski.restapi.models.User;
 import com.yanovski.restapi.repositoties.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationServiceException;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
 
 @Service
 public class JwtUserDetailsService implements UserDetailsService {
