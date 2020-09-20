@@ -1,9 +1,11 @@
-package com.yanovski.restapi.dtos;
+package com.yanovski.restapi.controllers.payload;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -13,5 +15,7 @@ public class CreateUserRequest {
     private String username;
     @NonNull
     private String password;
-    private String role;
+    @NonNull
+    private String email;
+    private Set<String> roles;
 }

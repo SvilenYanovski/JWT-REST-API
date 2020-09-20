@@ -6,9 +6,11 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.time.LocalDate;
 
@@ -27,4 +29,10 @@ public class Score {
 
     @Column
     private LocalDate date;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    private User student;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    private Course course;
 }

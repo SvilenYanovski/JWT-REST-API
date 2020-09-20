@@ -1,5 +1,6 @@
-package com.yanovski.restapi.security.models;
+package com.yanovski.restapi.controllers.payload;
 
+import com.yanovski.restapi.dtos.UserDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,11 +11,7 @@ import java.util.Set;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class JwtResponse {
-    private String token;
-    private Long userId;
-    private String username;
-    private String email;
-    private Set<String> roles;
+public class CreateUserResponse {
+    private UserDTO user;
     private Set<String> errors = new HashSet<>();
 }

@@ -1,57 +1,37 @@
 package com.yanovski.restapi.controllers;
 
-import com.yanovski.restapi.models.User;
-import com.yanovski.restapi.security.config.JwtTokenUtil;
-import com.yanovski.restapi.dtos.CreateUserRequest;
+import com.yanovski.restapi.controllers.payload.CreateUserRequest;
+import com.yanovski.restapi.controllers.payload.CreateUserResponse;
 import com.yanovski.restapi.security.models.JwtRequest;
 import com.yanovski.restapi.security.models.JwtResponse;
-import com.yanovski.restapi.security.services.JwtUserDetailsService;
+import com.yanovski.restapi.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.*;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.authentication.AuthenticationServiceException;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @CrossOrigin
 public class AuthenticationController {
-
     @Autowired
-    private AuthenticationManager authenticationManager;
+    private UserService userService;
 
-    @Autowired
-    private JwtTokenUtil jwtTokenUtil;
-
-    @Autowired
-    private JwtUserDetailsService userDetailsService;
 
     @PostMapping("/authenticate")
-    public ResponseEntity<JwtResponse> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest) throws Exception {
-        authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
-        final UserDetails userDetails = userDetailsService
-                .loadUserByUsername(authenticationRequest.getUsername());
-        final JwtResponse token = new JwtResponse(jwtTokenUtil.generateToken(userDetails));
-        return new ResponseEntity<>(token, HttpStatus.OK);
+    public ResponseEntity<JwtResponse> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest) {
+        return new ResponseEntity<>(userService.createAuthenticationToken(authenticationRequest), HttpStatus.OK);
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> saveUser(@RequestBody CreateUserRequest user) throws Exception {
+    public ResponseEntity<CreateUserResponse> saveUser(@RequestBody CreateUserRequest user) {
         try {
-            User created = userDetailsService.save(user);
-            return new ResponseEntity<>(created, HttpStatus.OK);
+            return new ResponseEntity<>(userService.save(user), HttpStatus.OK);
         } catch (AuthenticationServiceException ex) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    private void authenticate(String username, String password) throws Exception {
-        try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-        } catch (DisabledException e) {
-            throw new Exception("USER_DISABLED", e);
-        } catch (BadCredentialsException e) {
-            throw new Exception("INVALID_CREDENTIALS", e);
         }
     }
 }
