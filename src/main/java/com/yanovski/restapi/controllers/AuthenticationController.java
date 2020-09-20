@@ -2,7 +2,7 @@ package com.yanovski.restapi.controllers;
 
 import com.yanovski.restapi.models.User;
 import com.yanovski.restapi.security.config.JwtTokenUtil;
-import com.yanovski.restapi.dtos.UserDto;
+import com.yanovski.restapi.dtos.CreateUserRequest;
 import com.yanovski.restapi.security.models.JwtRequest;
 import com.yanovski.restapi.security.models.JwtResponse;
 import com.yanovski.restapi.security.services.JwtUserDetailsService;
@@ -36,7 +36,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> saveUser(@RequestBody UserDto user) throws Exception {
+    public ResponseEntity<User> saveUser(@RequestBody CreateUserRequest user) throws Exception {
         try {
             User created = userDetailsService.save(user);
             return new ResponseEntity<>(created, HttpStatus.OK);
