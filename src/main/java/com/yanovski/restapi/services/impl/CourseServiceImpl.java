@@ -14,7 +14,6 @@ import com.yanovski.restapi.services.CourseService;
 import com.yanovski.restapi.services.RoleService;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -37,7 +36,8 @@ public class CourseServiceImpl implements CourseService {
     @Autowired
     private RoleService roleService;
 
-    private ModelMapper mapper = new ModelMapper();
+    @Autowired
+    private ModelMapper mapper;
 
     @Override
     public void create(CourseDTO courseDTO) {
@@ -95,7 +95,6 @@ public class CourseServiceImpl implements CourseService {
             score.setScore(scoreValue);
             score.setDate(LocalDate.now());
 
-            mapper.getConfiguration().setMatchingStrategy(MatchingStrategies.LOOSE);
             return mapper.map(scoreRepository.save(score), ScoreDTO.class);
         }
         return null;

@@ -11,7 +11,7 @@ import java.util.Set;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreateUserResponse {
+public class ModifyUserResponse {
     private UserDTO user;
     private Set<String> errors = new HashSet<>();
 }

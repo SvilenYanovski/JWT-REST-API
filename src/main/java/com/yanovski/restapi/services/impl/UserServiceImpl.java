@@ -1,20 +1,23 @@
 package com.yanovski.restapi.services.impl;
 
 import com.yanovski.restapi.controllers.payload.CreateUserRequest;
-import com.yanovski.restapi.controllers.payload.CreateUserResponse;
+import com.yanovski.restapi.controllers.payload.EditUserRequest;
+import com.yanovski.restapi.controllers.payload.ModifyUserResponse;
+import com.yanovski.restapi.dtos.RoleDTO;
 import com.yanovski.restapi.dtos.UserDTO;
 import com.yanovski.restapi.models.Role;
 import com.yanovski.restapi.models.User;
-import com.yanovski.restapi.repositoties.RoleRepository;
 import com.yanovski.restapi.repositoties.UserRepository;
 import com.yanovski.restapi.security.config.JwtTokenUtil;
 import com.yanovski.restapi.security.models.JwtRequest;
 import com.yanovski.restapi.security.models.JwtResponse;
 import com.yanovski.restapi.security.models.UserDetailsImpl;
+import com.yanovski.restapi.services.RoleService;
 import com.yanovski.restapi.services.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -25,9 +28,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -45,12 +50,13 @@ public class UserServiceImpl implements UserService {
     private JwtTokenUtil jwtTokenUtil;
 
     @Autowired
-    private RoleRepository roleRepository;
+    private RoleService roleService;
 
     @Autowired
     private PasswordEncoder bcryptEncoder;
 
-    private final ModelMapper mapper = new ModelMapper();
+    @Autowired
+    private ModelMapper mapper;
 
     @Override
     public JwtResponse createAuthenticationToken(JwtRequest authenticationRequest) {
@@ -85,8 +91,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public CreateUserResponse save(CreateUserRequest createUserRequest) {
-        CreateUserResponse response = new CreateUserResponse();
+    public ModifyUserResponse save(CreateUserRequest createUserRequest) {
+        ModifyUserResponse response = new ModifyUserResponse();
         if (userRepository.existsByUsername(createUserRequest.getUsername())) {
             response.getErrors().add("Username is already taken!");
             return response;
@@ -101,37 +107,99 @@ public class UserServiceImpl implements UserService {
         newUser.setUsername(createUserRequest.getUsername());
         newUser.setPassword(bcryptEncoder.encode(createUserRequest.getPassword()));
         newUser.setEmail(createUserRequest.getEmail());
-        Set<String> strRoles = createUserRequest.getRoles();
-        Set<Role> roles = new HashSet<>();
 
-        if (strRoles == null) {
-            Role userRole = roleRepository.findByRoleName(Role.Name.ROLE_USER)
+        Set<String> strRoles = createUserRequest.getRoles();
+        Set<RoleDTO> roles = createRoleSet(strRoles);
+        newUser.getRoles().addAll(roles.stream().map(r -> mapper.map(r, Role.class)).collect(Collectors.toSet()));
+
+        User persisted = userRepository.save(newUser);
+        response.setUser(mapper.map(persisted, UserDTO.class));
+        return  response;
+    }
+
+    @Override
+    public ModifyUserResponse update(EditUserRequest editUserRequest) {
+        ModifyUserResponse response = new ModifyUserResponse();
+        User usr = userRepository.findById(editUserRequest.getId())
+                .orElseThrow(() -> new EntityNotFoundException("User not found!"));
+
+        if (userRepository.existsByUsername(editUserRequest.getUsername())) {
+            response.getErrors().add("Username is already taken!");
+            return response;
+        } else {
+            if (!editUserRequest.getUsername().isEmpty()) {
+                usr.setUsername(editUserRequest.getUsername());
+            }
+        }
+
+        if (userRepository.existsByEmail(editUserRequest.getEmail())) {
+            response.getErrors().add("Email is already in use!");
+            return response;
+        } else {
+            if (!editUserRequest.getEmail().isEmpty()) {
+                usr.setEmail(editUserRequest.getEmail());
+            }
+        }
+
+        if (!editUserRequest.getPassword().isEmpty()) {
+            usr.setPassword(bcryptEncoder.encode(editUserRequest.getPassword()));
+        }
+
+        if (editUserRequest.getRoles() != null && !editUserRequest.getRoles().isEmpty()) {
+            Set<String> strRoles = editUserRequest.getRoles();
+            Set<RoleDTO> roles = createRoleSet(strRoles);
+            usr.setRoles(roles.stream().map(r -> mapper.map(r, Role.class)).collect(Collectors.toSet()));
+        }
+
+        User updated = userRepository.save(usr);
+        response.setUser(mapper.map(updated, UserDTO.class));
+        return response;
+    }
+
+    @Async
+    @Override
+    public CompletableFuture<Void> delete(String userName) {
+        Optional<User> toDelete = userRepository.findByUsername(userName);
+        toDelete.ifPresent(user -> userRepository.delete(user));
+        return CompletableFuture.runAsync(() -> {
+            log.info("Starting long delete process.");
+            try {
+                Thread.sleep(10*1000);
+            } catch (InterruptedException e) {
+                log.error("Interrupted exception....", e);
+            }
+            toDelete.ifPresent(user -> userRepository.delete(user));
+            log.info("Ending long delete process.");
+        });
+    }
+
+    private Authentication authenticate(String username, String password) {
+        return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+    }
+
+    private Set<RoleDTO> createRoleSet(Set<String> strRoles) {
+        Set<RoleDTO> roles = new HashSet<>();
+        if (strRoles == null || strRoles.isEmpty()) {
+            RoleDTO userRole = roleService.findByRoleName(Role.Name.ROLE_USER.name())
                     .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
             roles.add(userRole);
         } else {
             strRoles.forEach(role -> {
                 switch (role) {
                     case "student":
-                        Optional<Role> studentRole = roleRepository.findByRoleName(Role.Name.ROLE_STUDENT);
+                        Optional<RoleDTO> studentRole = roleService.findByRoleName(Role.Name.ROLE_STUDENT.name());
                         studentRole.ifPresent(roles::add);
                         break;
                     case "teacher":
-                        Optional<Role> modRole = roleRepository.findByRoleName(Role.Name.ROLE_TEACHER);
-                        modRole.ifPresent(roles::add);
+                        Optional<RoleDTO> teacherRole = roleService.findByRoleName(Role.Name.ROLE_TEACHER.name());
+                        teacherRole.ifPresent(roles::add);
                         break;
                     default:
-                        Optional<Role> userRole = roleRepository.findByRoleName(Role.Name.ROLE_USER);
+                        Optional<RoleDTO> userRole = roleService.findByRoleName(Role.Name.ROLE_USER.name());
                         userRole.ifPresent(roles::add);
                 }
             });
         }
-        newUser.getRoles().addAll(roles);
-        User persisted = userRepository.save(newUser);
-        response.setUser(mapper.map(persisted, UserDTO.class));
-        return  response;
-    }
-
-    private Authentication authenticate(String username, String password) {
-        return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+        return roles;
     }
 }

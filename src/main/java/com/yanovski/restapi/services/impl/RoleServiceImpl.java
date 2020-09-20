@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -23,7 +24,8 @@ public class RoleServiceImpl implements RoleService {
 
     private final Set<RoleDTO> roles = new HashSet<>();
 
-    private final ModelMapper mapper = new ModelMapper();
+    @Autowired
+    private ModelMapper mapper;
 
     @PostConstruct
     void initRoles() {
@@ -41,5 +43,10 @@ public class RoleServiceImpl implements RoleService {
     public void save(RoleDTO roleDTO) {
         Role role = roleRepository.save(mapper.map(roleDTO, Role.class));
         roles.add(mapper.map(role, RoleDTO.class));
+    }
+
+    @Override
+    public Optional<RoleDTO> findByRoleName(String name) {
+        return roles.stream().filter(r -> r.getRoleName().name().equals(name)).findFirst();
     }
 }
