@@ -2,6 +2,7 @@ package com.yanovski.restapi.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
@@ -26,6 +27,7 @@ public class Course {
     @Column
     private String courseName;
 
+    @EqualsAndHashCode.Exclude
     @ManyToMany(mappedBy = "courses")
     private Set<User> students;
 }
