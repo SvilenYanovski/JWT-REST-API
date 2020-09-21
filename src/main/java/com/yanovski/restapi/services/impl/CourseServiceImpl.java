@@ -100,6 +100,29 @@ public class CourseServiceImpl implements CourseService {
         return null;
     }
 
+    @Override
+    public CourseDTO assignTeacherToCourse(String teacherUsername, Long courseId) {
+        Optional<User> teacher = userRepository.findByUsername(teacherUsername);
+        Optional<Course> course = courseRepository.findById(courseId);
+        if (teacher.isPresent() && course.isPresent()) {
+            User usr = teacher.get();
+            Course crs = course.get();
+            String teacherRole = roleService.getRoles().stream()
+                    .filter(r -> r.getRoleName().equals(Role.Name.ROLE_TEACHER))
+                    .map(r -> r.getRoleName().name())
+                    .findFirst().orElseThrow(() -> new EntityNotFoundException("Teacher Role not found!"));
+
+            if (!isInRole(usr, teacherRole)) {
+                log.error("The user is not a teacher: {}", usr);
+                return null;
+            }
+
+            crs.setTeacher(usr);
+            return mapper.map(courseRepository.save(crs), CourseDTO.class);
+        }
+        return null;
+    }
+
     private boolean isInCourse(User usr, Course crs) {
         Optional<Course> course = usr.getCourses().stream()
                 .filter(c -> c.getId() == crs.getId())

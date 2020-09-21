@@ -10,4 +10,6 @@ public interface CourseService {
     UserDTO assignStudentToCourse(String studentUsername, Long courseId);
 
     ScoreDTO assignAScoreToStudentsCourse(String studentUsername, Long courseId, Double scoreValue);
+
+    CourseDTO assignTeacherToCourse(String teacherUsername, Long courseId);
 }

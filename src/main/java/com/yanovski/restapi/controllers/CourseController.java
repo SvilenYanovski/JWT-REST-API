@@ -36,6 +36,14 @@ public class CourseController {
         return new ResponseEntity<>(result, result != null ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
     }
 
+    @PostMapping("/course/{courseId}/teacher/{teacherUsername}")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<CourseDTO> assignTeacherToCourse(@PathVariable Long courseId, @PathVariable String teacherUsername) {
+        log.info("Assigning teacher Username:{} to a course ID:{}", teacherUsername, courseId);
+        CourseDTO result = courseService.assignTeacherToCourse(teacherUsername, courseId);
+        return new ResponseEntity<>(result, result != null ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+    }
+
     @PostMapping("/course/{courseId}/student/{studentUsername}/score/{scoreValue}")
     @PreAuthorize("hasRole('TEACHER')")
     public ResponseEntity<ScoreDTO> assignAScoreToStudentsCourse(@PathVariable Long courseId,
