@@ -3,9 +3,11 @@ package com.yanovski.restapi.services;
 import com.yanovski.restapi.controllers.payload.CreateUserRequest;
 import com.yanovski.restapi.controllers.payload.EditUserRequest;
 import com.yanovski.restapi.controllers.payload.ModifyUserResponse;
+import com.yanovski.restapi.dtos.UserDTO;
 import com.yanovski.restapi.security.models.JwtRequest;
 import com.yanovski.restapi.security.models.JwtResponse;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public interface UserService {
@@ -15,4 +17,6 @@ public interface UserService {
     ModifyUserResponse update(EditUserRequest user);
 
     CompletableFuture<Void> delete(String userName);
+
+    List<UserDTO> findAllByRole(String role);
 }

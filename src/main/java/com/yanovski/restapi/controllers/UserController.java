@@ -3,6 +3,7 @@ package com.yanovski.restapi.controllers;
 import com.yanovski.restapi.controllers.payload.CreateUserRequest;
 import com.yanovski.restapi.controllers.payload.EditUserRequest;
 import com.yanovski.restapi.controllers.payload.ModifyUserResponse;
+import com.yanovski.restapi.dtos.UserDTO;
 import com.yanovski.restapi.security.models.JwtRequest;
 import com.yanovski.restapi.security.models.JwtResponse;
 import com.yanovski.restapi.services.UserService;
@@ -15,11 +16,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -55,12 +59,22 @@ public class UserController {
     @Async
     @DeleteMapping("/user/{userName}/delete")
     @PreAuthorize("hasRole('TEACHER')")
-    public ResponseEntity<Void> updateUser(@PathVariable String userName) {
+    public ResponseEntity<Void> deleteUser(@PathVariable String userName) {
         try {
             log.info("Delete User API started.");
             userService.delete(userName);
             log.info("Returning Http Status code OK (200) before the actual delete.");
             return new ResponseEntity<>(HttpStatus.OK);
+        } catch (AuthenticationServiceException ex) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/users/{role}")
+    @PreAuthorize("hasRole('TEACHER')")
+    public ResponseEntity<List<UserDTO>> updateUser(@PathVariable String role) {
+        try {
+            return new ResponseEntity<>(userService.findAllByRole(role), HttpStatus.OK);
         } catch (AuthenticationServiceException ex) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }

@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -171,6 +172,16 @@ public class UserServiceImpl implements UserService {
             toDelete.ifPresent(user -> userRepository.delete(user));
             log.info("Ending long delete process.");
         });
+    }
+
+    @Override
+    public List<UserDTO> findAllByRole(String role) {
+        Optional<RoleDTO> roledto = roleService.findByRoleName("ROLE_" + role.toUpperCase());
+        if (roledto.isPresent()) {
+            List<User> users = userRepository.findAllByRole(roledto.get().getRoleName());
+            return users.stream().map(u -> mapper.map(u, UserDTO.class)).collect(Collectors.toList());
+        }
+        return null;
     }
 
     private Authentication authenticate(String username, String password) {
