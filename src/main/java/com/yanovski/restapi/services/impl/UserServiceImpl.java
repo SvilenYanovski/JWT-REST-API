@@ -161,7 +161,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public CompletableFuture<Void> delete(String userName) {
         Optional<User> toDelete = userRepository.findByUsername(userName);
-        toDelete.ifPresent(user -> userRepository.delete(user));
+        
         return CompletableFuture.runAsync(() -> {
             log.info("Starting long delete process.");
             try {
